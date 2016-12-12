@@ -16,6 +16,12 @@ if ( ! defined( 'WPINC' ) ) {
 // The core plugin class.
 require dirname( __FILE__ ) . '/includes/class-wsuwp-vals-custom-roles.php';
 
+// Add custom roles on activation.
+register_activation_hook( __FILE__, array( 'WSUWP_VALS_Custom_Roles', 'add_roles' ) );
+
+// Remove custom roles on deactivation
+register_deactivation_hook( __FILE__, array( 'WSUWP_VALS_Custom_Roles', 'remove_roles' ) );
+
 add_action( 'after_setup_theme', 'WSUWP_VALS_Custom_Roles' );
 /**
  * Start things up.
