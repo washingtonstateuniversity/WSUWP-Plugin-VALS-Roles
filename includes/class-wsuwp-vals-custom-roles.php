@@ -27,7 +27,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @var string Slug for tracking the 'Center' taxonomy.
 	 */
-	public $taxonomy_slug = 'center';
+	public $taxonomy_slug = 'vals_center';
 
 	/**
 	 * Maintain and return the one instance.
@@ -105,7 +105,7 @@ class WSUWP_VALS_Custom_Roles {
 	 */
 	public function register_taxonomy() {
 		$labels = array(
-			'name' => 'Center',
+			'name' => 'VALS Centers',
 			'singular_name' => 'Center',
 			'search_items' => 'Search Centers',
 			'popular_items' => 'Popular Centers',
@@ -135,7 +135,6 @@ class WSUWP_VALS_Custom_Roles {
 			'hierarchical' => true,
 			'show_ui' => true,
 			'show_tagcloud' => false,
-			//'show_in_quick_edit' => false,
 			'show_admin_column' => true,
 			'capabilities' => $capabilities,
 			'update_count_callback' => array( $this, 'update_center_count' ),
@@ -270,8 +269,8 @@ class WSUWP_VALS_Custom_Roles {
 		$taxonomy = get_taxonomy( $this->taxonomy_slug );
 
 		add_users_page(
-			esc_attr( $taxonomy->labels->menu_name ),
-			esc_attr( $taxonomy->labels->menu_name ),
+			esc_attr( $taxonomy->labels->name ),
+			esc_attr( $taxonomy->labels->name ),
 			$taxonomy->cap->manage_terms,
 			'edit-tags.php?taxonomy=' . $taxonomy->name
 		);
