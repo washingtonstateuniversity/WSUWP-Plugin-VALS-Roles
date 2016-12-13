@@ -340,6 +340,8 @@ class WSUWP_VALS_Custom_Roles {
 	 * @param string $redirect_to URL to redirect to.
 	 * @param string $request     URL the user is coming from.
 	 * @param object $user        WP_User object if login was successful, WP_Error object otherwise.
+	 *
+	 * @return string $redirect_to URL to redirect to.
 	 */
 	function vals_trainee_login_redirect( $redirect_to, $request, $user ) {
 		if ( isset( $user->roles ) && is_array( $user->roles ) &&  in_array( $this->role_name_trainee, $user->roles, true ) ) {
