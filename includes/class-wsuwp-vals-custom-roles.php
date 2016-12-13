@@ -255,11 +255,16 @@ class WSUWP_VALS_Custom_Roles {
 			return;
 		}
 
-		$term = sanitize_text_field( $_POST[ $this->taxonomy_slug ] );
+		if ( isset( $_POST[ $this->taxonomy_slug ] ) ) {
+			$term = sanitize_text_field( $_POST[ $this->taxonomy_slug ] );
 
-		wp_set_object_terms( $user_id, array( $term ), $this->taxonomy_slug, false );
-		clean_object_term_cache( $user_id, $this->taxonomy_slug );
-		update_user_meta( $user_id, 'certification', sanitize_text_field( $_POST['certification'] ) );
+			wp_set_object_terms( $user_id, array( $term ), $this->taxonomy_slug, false );
+			clean_object_term_cache( $user_id, $this->taxonomy_slug );
+		}
+
+		if ( isset( $_POST['certification'] ) ) {
+			update_user_meta( $user_id, 'certification', sanitize_text_field( $_POST['certification'] ) );
+		}
 	}
 
 	/**
