@@ -190,12 +190,11 @@ class WSUWP_VALS_Custom_Roles {
 			<?php
 			$taxonomy = get_taxonomy( $this->taxonomy_slug );
 			$terms = get_terms( $this->taxonomy_slug, array( 'hide_empty' => false ) );
-
-			if ( current_user_can( $taxonomy->cap->assign_terms ) && ! empty( $terms ) ) {
-				?>
-				<tr>
-					<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
-					<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
+			?>
+			<tr>
+				<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
+				<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
+				if ( current_user_can( $taxonomy->cap->assign_terms ) && ! empty( $terms ) ) {
 					foreach ( $terms as $term ) {
 						?>
 						<input type="radio"
@@ -206,10 +205,13 @@ class WSUWP_VALS_Custom_Roles {
 						<label for="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></label><br />
 						<?php
 					}
-					?></td>
-				</tr>
-				<?php
-			}
+				} else {
+					$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
+					?><p><?php echo esc_html( $center[0]->name ); ?></p><?php
+				}
+				?></td>
+			</tr>
+			<?php
 
 			if ( in_array( $this->role_name_trainee, (array) $user->roles, true ) ) {
 				?>
@@ -222,13 +224,13 @@ class WSUWP_VALS_Custom_Roles {
 						$certification_value = get_the_author_meta( 'certification', $user->ID );
 
 						if ( current_user_can( $taxonomy->cap->assign_terms ) ) { ?>
-							<input type="text"
+							<input type="date"
 								   name="certification"
 								   id="certification"
 								   value="<?php echo esc_attr( $certification_value ); ?>"
 								   class="regular-text" />
 						<?php } else { ?>
-							<p><?php echo esc_attr( $certification_value ); ?></p>
+							<p><?php echo esc_html( $certification_value ); ?></p>
 						<?php } ?>
 					</td>
 				</tr>
