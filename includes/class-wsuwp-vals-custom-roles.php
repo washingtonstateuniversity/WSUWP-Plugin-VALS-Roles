@@ -67,6 +67,7 @@ class WSUWP_VALS_Custom_Roles {
 		add_action( 'admin_init', array( $this, 'vals_trainee_menu_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'vals_trainee_profile_enqueue' ) );
 		add_action( 'pre_get_users', array( $this, 'vals_center_admin_pre_user_query' ) );
+		add_filter( 'views_users', array( $this, 'vals_center_admin_views_users' ) );
 	}
 
 	/**
@@ -473,9 +474,33 @@ class WSUWP_VALS_Custom_Roles {
 			$center_users = get_objects_in_term( $center[0]->term_id, $this->taxonomy_slug );
 
 			if ( is_array( $center ) && is_array( $center_users ) ) {
-				$query->set( 'role__in', $this->role_name_trainee );
+				$query->set( 'role__in', array( $this->role_name_trainee, $this->role_name_center_admin ) );
 				$query->set( 'include', $center_users );
 			}
 		}
+	}
+
+	/**
+	 * When users with the 'VALS Center Admin' role are viewing the user list,
+	 * remove the default views and add a new one for the the user's VALS center.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param array $views An array of available list table views.
+	 *
+	 * @return array $views The modified array of available list table views.
+	 */
+	public function vals_center_admin_views_users( $views ) {
+		$user = wp_get_current_user();
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_center_admin, $user->roles, true ) ) {
+			$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
+			$center_users = get_objects_in_term( $center[0]->term_id, $this->taxonomy_slug );
+			$view_value = '<a href="users.php" class="current">' . $center[0]->name . ' Users ';
+			$view_value .= '<span class="count">(' . count( $center_users ) . ')</span></a>';
+			$views = array( 'vals_center' => $view_value );
+		}
+
+		return $views;
 	}
 }
