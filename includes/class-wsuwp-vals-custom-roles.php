@@ -176,6 +176,31 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
+	 * Return the certification with a wrapper indicating its status.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param string $certification The user's certification date.
+	 *
+	 * @return string $certification The user's certification date.
+	 */
+	public function certification_status( $certification ) {
+		$certification_date = new DateTime( $certification );
+		$today = new DateTime( 'now' );
+		$difference = $certification_date->diff( $today );
+
+		if ( 5 < (int) $difference->y ) {
+			// User's certification has expired.
+			return '<span style="color:#c60c30;">' . esc_html( $certification ) . '</span>';
+		} elseif ( 54 < (int) 12 * $difference->y + $difference->m ) {
+			// User's certification expires in 6 (or fewer) months.
+			return '<span style="color:#f6861f;">' . esc_html( $certification ) . '</span>';
+		} else {
+			return esc_html( $certification );
+		}
+	}
+
+	/**
 	 * Add a 'VALS Data' section to the edit user/profile page.
 	 *
 	 * @since 0.0.1
@@ -230,16 +255,16 @@ class WSUWP_VALS_Custom_Roles {
 				</th>
 				<td>
 					<?php
-					$certification_value = get_the_author_meta( 'certification', $user->ID );
+					$certification = get_the_author_meta( 'certification', $user->ID );
 
 					if ( current_user_can( $taxonomy->cap->assign_terms ) ) { ?>
 						<input type="date"
 							   name="certification"
 							   id="certification"
-							   value="<?php echo esc_attr( $certification_value ); ?>"
+							   value="<?php echo esc_attr( $certification ); ?>"
 							   class="regular-text" />
 					<?php } else { ?>
-						<p><?php echo esc_html( $certification_value ); ?></p>
+						<p><?php echo wp_kses_post( $this->certification_status( $certification ) ); ?></p>
 					<?php } ?>
 				</td>
 			</tr>
@@ -369,15 +394,7 @@ class WSUWP_VALS_Custom_Roles {
 	function manage_users_vals_columns( $display, $column, $user_id ) {
 		if ( 'vals_date_certified' === $column ) {
 			$certification = get_user_meta( $user_id, 'certification', true );
-			$cert_date = new DateTime( $certification );
-			$today = new DateTime( 'now' );
-			$difference = $today->diff( $cert_date );
-
-			if ( 5 > (int) $difference->y ) {
-				$display = $certification;
-			} else {
-				$display = '<span style="color:#c60c30;">' . esc_html( $certification ) . '</span>';
-			}
+			$display = $this->certification_status( $certification );
 		}
 
 		if ( 'vals_center' === $column ) {
@@ -388,6 +405,44 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		return $display;
+	}
+
+	/**
+	 * Determine whether the user has a VALS role other than 'VALS Center Admin'.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param object $user WP_User object.
+	 *
+	 * @return boolean
+	 */
+	public function non_admin_role( $user ) {
+		$non_admin_roles = $this->roles;
+
+		unset( $non_admin_roles['admin'] );
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Determine if the user has the 'VALS Center Admin' role.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param object $user WP_User object.
+	 *
+	 * @return boolean
+	 */
+	public function vals_admin_role( $user ) {
+		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -403,11 +458,7 @@ class WSUWP_VALS_Custom_Roles {
 	 * @return string $redirect_to URL to redirect to.
 	 */
 	function vals_roles_login_redirect( $redirect_to, $request, $user ) {
-		$non_admin_roles = $this->roles;
-
-		unset( $non_admin_roles['admin'] );
-
-		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
+		if ( $this->non_admin_role( $user ) ) {
 			$redirect_to = get_edit_profile_url( $user->ID );
 		}
 
@@ -428,28 +479,29 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		$user = wp_get_current_user();
-		$non_admin_roles = $this->roles;
 
-		unset( $non_admin_roles['admin'] );
-
-		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
+		if ( $this->non_admin_role( $user ) ) {
 			wp_redirect( get_edit_profile_url( $user->ID ) );
 		}
 	}
 
 	/**
-	 * Remove the 'Dashboard' page for users with the 'VALS Registered Trainee' or 'VALS Certified' role.
+	 * Remove certain admin menu links for the different custom VALS roles.
 	 *
 	 * @since 0.0.1
 	 */
 	public function vals_roles_menu_pages() {
 		$user = wp_get_current_user();
-		$non_admin_roles = $this->roles;
 
-		unset( $non_admin_roles['admin'] );
-
-		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
+		// Remove the 'Dashboard' page for users with the 'VALS Registered Trainee' or 'VALS Certified' role.
+		if ( $this->non_admin_role( $user ) ) {
 			remove_menu_page( 'index.php' );
+		}
+
+		// Remove the 'Users' > 'Add New' link for users with the 'VALS Center Admin' role.
+		// (Access to this is granted via the `promote_users` capability.)
+		if ( $this->vals_admin_role( $user ) ) {
+			remove_submenu_page( 'users.php', 'user-new.php' );
 		}
 	}
 
