@@ -60,6 +60,8 @@ class WSUWP_VALS_Custom_Roles {
 		add_filter( 'parent_file', array( $this, 'user_center_page' ) );
 		add_filter( 'manage_edit-center_columns', array( $this, 'center_user_column' ) );
 		add_action( 'manage_center_custom_column', array( $this, 'manage_center_column' ), 10, 3 );
+		add_filter( 'manage_users_columns', array( $this, 'users_custom_columns' ) );
+		add_action( 'manage_users_custom_column', array( $this, 'manage_users_vals_columns' ), 10, 3 );
 		add_filter( 'login_redirect', array( $this, 'vals_trainee_login_redirect' ), 10, 3 );
 		add_action( 'current_screen', array( $this, 'vals_trainee_redirect' ) );
 		add_action( 'admin_init', array( $this, 'vals_trainee_menu_pages' ) );
@@ -330,6 +332,57 @@ class WSUWP_VALS_Custom_Roles {
 			$term = get_term( $term_id, $this->taxonomy_slug );
 			echo esc_html( $term->count );
 		}
+	}
+
+	/**
+	 * Modify the columns on the 'All Users' page.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param array $columns An array of columns to be shown in the All Users table.
+	 */
+	public function users_custom_columns( $columns ) {
+		unset( $columns['posts'] );
+
+		$columns['vals_date_certified'] = 'Date Certified';
+		$columns['vals_center'] = 'Center';
+
+		return $columns;
+	}
+
+	/**
+	 * Displays content for custom columns on the 'All Users' page.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param string $display Empty string.
+	 * @param string $column  The name of the custom column.
+	 * @param int    $user_id ID of the currently-listed user.
+	 *
+	 * @return string $display The custom value to display.
+	 */
+	function manage_users_vals_columns( $display, $column, $user_id ) {
+		if ( 'vals_date_certified' === $column ) {
+			$certification = get_user_meta( $user_id, 'certification', true );
+			$cert_date = new DateTime( $certification );
+			$today = new DateTime( 'now' );
+			$difference = $today->diff( $cert_date );
+
+			if ( 5 > (int) $difference->y ) {
+				$display = $certification;
+			} else {
+				$display = '<span style="color:#c60c30;">' . esc_html( $certification ) . '</span>';
+			}
+		}
+
+		if ( 'vals_center' === $column ) {
+			$centers = wp_get_object_terms( $user_id, $this->taxonomy_slug );
+			if ( ! empty( $centers ) ) {
+				$display = esc_html( $centers[0]->name );
+			}
+		}
+
+		return $display;
 	}
 
 	/**
