@@ -1,0 +1,12 @@
+h2,
+.form-table {
+	display: none;
+}
+
+h2.vals-data {
+	display: block;
+}
+
+.form-table.vals-data {
+	display: table;
+}

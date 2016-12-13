@@ -63,6 +63,7 @@ class WSUWP_VALS_Custom_Roles {
 		add_filter( 'login_redirect', array( $this, 'vals_trainee_login_redirect' ), 10, 3 );
 		add_action( 'current_screen', array( $this, 'vals_trainee_redirect' ) );
 		add_action( 'admin_init', array( $this, 'vals_trainee_menu_pages' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'vals_trainee_profile_enqueue' ) );
 		add_action( 'pre_get_users', array( $this, 'vals_center_admin_pre_user_query' ) );
 	}
 
@@ -185,8 +186,8 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		?>
-		<h3>VALS Data</h3>
-		<table class="form-table">
+		<h2 class="vals-data">VALS Data</h2>
+		<table class="form-table vals-data">
 			<?php
 			$taxonomy = get_taxonomy( $this->taxonomy_slug );
 			$terms = get_terms( $this->taxonomy_slug, array( 'hide_empty' => false ) );
@@ -377,6 +378,25 @@ class WSUWP_VALS_Custom_Roles {
 
 		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_trainee, $user->roles, true ) ) {
 			remove_menu_page( 'index.php' );
+		}
+	}
+
+	/**
+	 * Enqueue a stylesheet for 'VALS Registered Trainee' profiles.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param string $hook_suffix The current admin page.
+	 */
+	public function vals_trainee_profile_enqueue( $hook_suffix ) {
+		if ( 'profile.php' !== $hook_suffix ) {
+			return;
+		}
+
+		$user = wp_get_current_user();
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_trainee, $user->roles, true ) ) {
+			wp_enqueue_style( 'vals-trainee-profile', plugins_url( 'css/trainee-profile.css', dirname( __FILE__ ) ) );
 		}
 	}
 
