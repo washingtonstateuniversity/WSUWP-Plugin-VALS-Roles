@@ -11,16 +11,13 @@ class WSUWP_VALS_Custom_Roles {
 	/**
 	 * @since 0.0.1
 	 *
-	 * @var string Role name for 'VALS Registered Trainee'.
+	 * @var array Names for custom VALS roles.
 	 */
-	public $role_name_trainee = 'vals_trainee';
-
-	/**
-	 * @since 0.0.1
-	 *
-	 * @var string Role name for 'VALS Center Admin'.
-	 */
-	public $role_name_center_admin = 'vals_center_admin';
+	public $roles = array(
+		'trainee' => 'vals_trainee',
+		'certified' => 'vals_certified',
+		'admin' => 'vals_center_admin',
+	);
 
 	/**
 	 * @since 0.0.1
@@ -62,10 +59,10 @@ class WSUWP_VALS_Custom_Roles {
 		add_action( 'manage_center_custom_column', array( $this, 'manage_center_column' ), 10, 3 );
 		add_filter( 'manage_users_columns', array( $this, 'users_custom_columns' ) );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_vals_columns' ), 10, 3 );
-		add_filter( 'login_redirect', array( $this, 'vals_trainee_login_redirect' ), 10, 3 );
-		add_action( 'current_screen', array( $this, 'vals_trainee_redirect' ) );
-		add_action( 'admin_init', array( $this, 'vals_trainee_menu_pages' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'vals_trainee_profile_enqueue' ) );
+		add_filter( 'login_redirect', array( $this, 'vals_roles_login_redirect' ), 10, 3 );
+		add_action( 'current_screen', array( $this, 'vals_roles_redirect' ) );
+		add_action( 'admin_init', array( $this, 'vals_roles_menu_pages' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'vals_roles_enqueue_scripts' ) );
 		add_action( 'pre_get_users', array( $this, 'vals_center_admin_pre_user_query' ) );
 		add_filter( 'views_users', array( $this, 'vals_center_admin_views_users' ) );
 	}
@@ -77,7 +74,7 @@ class WSUWP_VALS_Custom_Roles {
 	 */
 	static function add_roles() {
 		add_role(
-			WSUWP_VALS_Custom_Roles()->role_name_trainee,
+			WSUWP_VALS_Custom_Roles()->roles['trainee'],
 			'VALS Registered Trainee',
 			array(
 				'read' => true,
@@ -85,11 +82,20 @@ class WSUWP_VALS_Custom_Roles {
 		);
 
 		add_role(
-			WSUWP_VALS_Custom_Roles()->role_name_center_admin,
+			WSUWP_VALS_Custom_Roles()->roles['certified'],
+			'VALS Certified',
+			array(
+				'read' => true,
+			)
+		);
+
+		add_role(
+			WSUWP_VALS_Custom_Roles()->roles['admin'],
 			'VALS Center Admin',
 			array(
 				'read' => true,
 				'list_users' => true,
+				'promote_users' => true,
 			)
 		);
 	}
@@ -98,8 +104,9 @@ class WSUWP_VALS_Custom_Roles {
 	 * Remove custom roles on deactivation.
 	 */
 	static function remove_roles() {
-		remove_role( WSUWP_VALS_Custom_Roles()->role_name_trainee );
-		remove_role( WSUWP_VALS_Custom_Roles()->role_name_center_admin );
+		remove_role( WSUWP_VALS_Custom_Roles()->roles['trainee'] );
+		remove_role( WSUWP_VALS_Custom_Roles()->roles['certified'] );
+		remove_role( WSUWP_VALS_Custom_Roles()->roles['admin'] );
 	}
 
 	/**
@@ -387,7 +394,8 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Redirect users with the 'VALS Registered Trainee' role to their profile page after successful login.
+	 * Redirect users with the 'VALS Registered Trainee' or 'VALS Certified' role
+	 * to their profile page after successful login.
 	 *
 	 * @since 0.0.1
 	 *
@@ -397,8 +405,12 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @return string $redirect_to URL to redirect to.
 	 */
-	function vals_trainee_login_redirect( $redirect_to, $request, $user ) {
-		if ( isset( $user->roles ) && is_array( $user->roles ) &&  in_array( $this->role_name_trainee, $user->roles, true ) ) {
+	function vals_roles_login_redirect( $redirect_to, $request, $user ) {
+		$non_admin_roles = $this->roles;
+
+		unset( $non_admin_roles['admin'] );
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
 			$redirect_to = get_edit_profile_url( $user->ID );
 		}
 
@@ -406,53 +418,62 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Redirect 'VALS Registered Trainee' users to their profile page if they are elsewhere in the admin.
+	 * Redirect users with the 'VALS Registered Trainee' or 'VALS Certified' role
+	 * to their profile page if they are elsewhere in the admin.
 	 *
 	 * @since 0.0.1
 	 *
 	 * @param WP_Screen object.
 	 */
-	public function vals_trainee_redirect( $current_screen ) {
+	public function vals_roles_redirect( $current_screen ) {
 		if ( 'profile' === $current_screen->base ) {
 			return;
 		}
 
 		$user = wp_get_current_user();
+		$non_admin_roles = $this->roles;
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_trainee, $user->roles, true ) ) {
+		unset( $non_admin_roles['admin'] );
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
 			wp_redirect( get_edit_profile_url( $user->ID ) );
 		}
 	}
 
 	/**
-	 * Remove the 'Dashboard' page for users with the 'VALS Registered Trainee' role.
+	 * Remove the 'Dashboard' page for users with the 'VALS Registered Trainee' or 'VALS Certified' role.
 	 *
 	 * @since 0.0.1
 	 */
-	public function vals_trainee_menu_pages() {
+	public function vals_roles_menu_pages() {
 		$user = wp_get_current_user();
+		$non_admin_roles = $this->roles;
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_trainee, $user->roles, true ) ) {
+		unset( $non_admin_roles['admin'] );
+
+		if ( isset( $user->roles ) && is_array( $user->roles ) && array_intersect( $non_admin_roles, (array) $user->roles ) ) {
 			remove_menu_page( 'index.php' );
 		}
 	}
 
 	/**
-	 * Enqueue a stylesheet for 'VALS Registered Trainee' profiles.
+	 * Enqueue a stylesheet for profiles of users with a custom VALS role.
 	 *
 	 * @since 0.0.1
 	 *
 	 * @param string $hook_suffix The current admin page.
 	 */
-	public function vals_trainee_profile_enqueue( $hook_suffix ) {
-		if ( 'profile.php' !== $hook_suffix ) {
+	public function vals_roles_enqueue_scripts( $hook_suffix ) {
+		if ( ! in_array( $hook_suffix, array( 'profile.php', 'user-edit.php' ), true ) ) {
 			return;
 		}
 
-		$user = wp_get_current_user();
+		global $user_id;
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_trainee, $user->roles, true ) ) {
-			wp_enqueue_style( 'vals-trainee-profile', plugins_url( 'css/trainee-profile.css', dirname( __FILE__ ) ) );
+		$user = get_userdata( $user_id );
+
+		if ( array_intersect( $this->roles, (array) $user->roles ) ) {
+			wp_enqueue_style( 'vals-user-profile', plugins_url( 'css/vals-user-profile.css', dirname( __FILE__ ) ) );
 		}
 	}
 
@@ -466,7 +487,7 @@ class WSUWP_VALS_Custom_Roles {
 	public function vals_center_admin_pre_user_query( $query ) {
 		$user = wp_get_current_user();
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_center_admin, $user->roles, true ) ) {
+		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
 			$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
 
 			// There's no `tax_query` implementation in `WP_User_Query`, so we'll try
@@ -474,7 +495,7 @@ class WSUWP_VALS_Custom_Roles {
 			$center_users = get_objects_in_term( $center[0]->term_id, $this->taxonomy_slug );
 
 			if ( is_array( $center ) && is_array( $center_users ) ) {
-				$query->set( 'role__in', array( $this->role_name_trainee, $this->role_name_center_admin ) );
+				$query->set( 'role__in', $this->roles );
 				$query->set( 'include', $center_users );
 			}
 		}
@@ -493,7 +514,7 @@ class WSUWP_VALS_Custom_Roles {
 	public function vals_center_admin_views_users( $views ) {
 		$user = wp_get_current_user();
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->role_name_center_admin, $user->roles, true ) ) {
+		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
 			$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
 			$center_users = get_objects_in_term( $center[0]->term_id, $this->taxonomy_slug );
 			$view_value = '<a href="users.php" class="current">' . $center[0]->name . ' Users ';
