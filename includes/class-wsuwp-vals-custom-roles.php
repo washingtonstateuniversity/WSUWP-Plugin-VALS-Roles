@@ -49,8 +49,7 @@ class WSUWP_VALS_Custom_Roles {
 	 */
 	public function setup_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomy' ), 12 );
-		add_action( 'show_user_profile', array( $this, 'extend_user_profile' ) );
-		add_action( 'edit_user_profile', array( $this, 'extend_user_profile' ) );
+		add_action( 'personal_options', array( $this, 'extend_user_profile' ) );
 		add_action( 'personal_options_update', array( $this, 'save_user_center_data' ) );
 		add_action( 'edit_user_profile_update', array( $this, 'save_user_center_data' ) );
 		add_action( 'admin_menu', array( $this, 'center_admin_page' ) );
@@ -184,70 +183,68 @@ class WSUWP_VALS_Custom_Roles {
 	 * @param object $user The user object currently being edited.
 	 */
 	public function extend_user_profile( $user ) {
-		global $user_id;
-		//$user_being_edited = get_userdata( $user_id );
-		$vals_roles = array( $this->role_name_trainee, $this->role_name_center_admin );
-
-		wp_nonce_field( 'save-vals-user-data', '_vals_user_nonce' );
-
-		// Bail if the user whose profile is being edited doesn't have one of the custom VALS roles.
-		if ( empty( count( array_intersect( $vals_roles, (array) $user->roles ) ) ) ) {
+		// Bail if not viewing a profile for a user with a custom VALS role.
+		if ( ! array_intersect( $this->roles, (array) $user->roles ) ) {
 			return;
 		}
 
+		wp_nonce_field( 'save-vals-user-data', '_vals_user_nonce' );
+
 		?>
-		<h2 class="vals-data">VALS Data</h2>
-		<table class="form-table vals-data">
-			<?php
-			$taxonomy = get_taxonomy( $this->taxonomy_slug );
-			$terms = get_terms( $this->taxonomy_slug, array( 'hide_empty' => false ) );
-			?>
-			<tr>
-				<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
-				<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
-				if ( current_user_can( $taxonomy->cap->assign_terms ) && ! empty( $terms ) ) {
-					foreach ( $terms as $term ) {
-						?>
-						<input type="radio"
-							   name="<?php echo esc_attr( $this->taxonomy_slug ); ?>"
-							   id="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"
-							   value="<?php echo esc_attr( $term->slug ); ?>"
-								<?php checked( true, is_object_in_term( $user->ID, $this->taxonomy_slug, $term ) ); ?> />
-						<label for="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></label><br />
-						<?php
-					}
-				} else {
-					$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
-					?><p><?php echo esc_html( $center[0]->name ); ?></p><?php
+		<tr class="vals-data">
+			<td colspan="2">
+				<h2>VALS Data</h2>
+			</td>
+		</tr>
+		<?php
+		$taxonomy = get_taxonomy( $this->taxonomy_slug );
+		$terms = get_terms( $this->taxonomy_slug, array( 'hide_empty' => false ) );
+		?>
+		<tr class="vals-data">
+			<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
+			<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
+			if ( current_user_can( $taxonomy->cap->assign_terms ) && ! empty( $terms ) ) {
+				foreach ( $terms as $term ) {
+					?>
+					<input type="radio"
+						   name="<?php echo esc_attr( $this->taxonomy_slug ); ?>"
+						   id="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"
+						   value="<?php echo esc_attr( $term->slug ); ?>"
+							<?php checked( true, is_object_in_term( $user->ID, $this->taxonomy_slug, $term ) ); ?> />
+					<label for="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></label><br />
+					<?php
 				}
-				?></td>
+			} else {
+				$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
+				?><p><?php echo esc_html( $center[0]->name ); ?></p><?php
+			}
+			?></td>
+		</tr>
+		<?php
+
+		if ( in_array( $this->roles['certified'], (array) $user->roles, true ) ) {
+			?>
+			<tr class="vals-data">
+				<th>
+					<label for="certification">Certification Date</label>
+				</th>
+				<td>
+					<?php
+					$certification_value = get_the_author_meta( 'certification', $user->ID );
+
+					if ( current_user_can( $taxonomy->cap->assign_terms ) ) { ?>
+						<input type="date"
+							   name="certification"
+							   id="certification"
+							   value="<?php echo esc_attr( $certification_value ); ?>"
+							   class="regular-text" />
+					<?php } else { ?>
+						<p><?php echo esc_html( $certification_value ); ?></p>
+					<?php } ?>
+				</td>
 			</tr>
 			<?php
-
-			if ( in_array( $this->role_name_trainee, (array) $user->roles, true ) ) {
-				?>
-				<tr>
-					<th>
-						<label for="certification">Certification Date</label>
-					</th>
-					<td>
-						<?php
-						$certification_value = get_the_author_meta( 'certification', $user->ID );
-
-						if ( current_user_can( $taxonomy->cap->assign_terms ) ) { ?>
-							<input type="date"
-								   name="certification"
-								   id="certification"
-								   value="<?php echo esc_attr( $certification_value ); ?>"
-								   class="regular-text" />
-						<?php } else { ?>
-							<p><?php echo esc_html( $certification_value ); ?></p>
-						<?php } ?>
-					</td>
-				</tr>
-			<?php } ?>
-		</table>
-		<?php
+		}
 	}
 
 	/**
