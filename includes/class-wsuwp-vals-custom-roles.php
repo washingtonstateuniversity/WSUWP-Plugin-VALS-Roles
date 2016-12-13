@@ -470,7 +470,7 @@ class WSUWP_VALS_Custom_Roles {
 		$user = get_userdata( $user_id );
 
 		if ( array_intersect( $this->roles, (array) $user->roles ) ) {
-			wp_enqueue_style( 'vals-user-profile', plugins_url( 'css/vals-user-profile.css', dirname( __FILE__ ) ) );
+			wp_enqueue_style( 'vals-role-profile', plugins_url( 'css/vals-role-profile.css', dirname( __FILE__ ) ) );
 		}
 	}
 
