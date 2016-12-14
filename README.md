@@ -8,7 +8,7 @@ A WordPress plugin that provides custom roles for the VALS Program site
 
 * **VALS Registered Trainee** - Users with this role have `read` capabilities and can view only their profile (any other admin pages redirect). They can be assigned to a VALS Center.
 * **VALS Certified** - Users with this role have the same capabilities and access levels as VALS Registered Trainees. They can be assigned a Certification Date and to a VALS Center.
-* **VALS Center Admin** - Users with this role have `read`, `list_users`, and `promote_users` capabilities.  They can be assigned to a VALS Center, and when viewing the Users list, they can see only users assigned to the same VALS Center and one of the provided roles. They can only promote users to one of the other two provided roles.
+* **VALS Center Admin** - Users with this role have `read`, `list_users`, and `promote_users` capabilities. They can be assigned to a VALS Center, and when viewing the Users list, they can see only users assigned to the same VALS Center and one of the provided roles. They can only promote users to one of the other two provided roles.
 
 ## Other Features
 
