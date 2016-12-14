@@ -559,7 +559,7 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		// Order users by certification date.
-		$orderby = $query->get( 'orderby');
+		$orderby = $query->get( 'orderby' );
 
 		if ( 'certification_date' === $orderby ) {
 			$query->set( 'meta_key', 'certification' );
