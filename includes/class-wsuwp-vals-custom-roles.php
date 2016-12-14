@@ -58,11 +58,12 @@ class WSUWP_VALS_Custom_Roles {
 		add_action( 'manage_center_custom_column', array( $this, 'manage_center_column' ), 10, 3 );
 		add_filter( 'manage_users_columns', array( $this, 'users_custom_columns' ) );
 		add_action( 'manage_users_custom_column', array( $this, 'manage_users_vals_columns' ), 10, 3 );
+		add_filter( 'manage_users_sortable_columns', array( $this, 'manage_users_vals_sortable_columns' ) );
 		add_filter( 'login_redirect', array( $this, 'vals_roles_login_redirect' ), 10, 3 );
 		add_action( 'current_screen', array( $this, 'vals_roles_redirect' ) );
 		add_action( 'admin_init', array( $this, 'vals_roles_menu_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'vals_roles_enqueue_scripts' ) );
-		add_action( 'pre_get_users', array( $this, 'vals_center_admin_pre_user_query' ) );
+		add_action( 'pre_get_users', array( $this, 'vals_pre_user_query' ) );
 		add_filter( 'views_users', array( $this, 'vals_center_admin_views_users' ) );
 	}
 
@@ -372,10 +373,14 @@ class WSUWP_VALS_Custom_Roles {
 	 * @param array $columns An array of columns to be shown in the All Users table.
 	 */
 	public function users_custom_columns( $columns ) {
-		unset( $columns['posts'] );
-
 		$columns['vals_date_certified'] = 'Date Certified';
 		$columns['vals_center'] = 'Center';
+		$user = wp_get_current_user();
+
+		if ( $this->vals_admin_role( $user ) ) {
+			unset( $columns['posts'] );
+			unset( $columns['vals_center'] );
+		}
 
 		return $columns;
 	}
@@ -408,11 +413,26 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
+	 * Allow for sorting users by the 'Date Certified' column.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param array $sortable_column An array of sortable columns.
+	 *
+	 * @return array $sortable_column Modified array of sortable columns.
+	 */
+	public function manage_users_vals_sortable_columns( $sortable_columns ) {
+		$sortable_columns['vals_date_certified'] = 'certification_date';
+
+		return $sortable_columns;
+	}
+
+	/**
 	 * Determine whether the user has a VALS role other than 'VALS Center Admin'.
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param object $user WP_User object.
+	 * @param WP_User object.
 	 *
 	 * @return boolean
 	 */
@@ -433,7 +453,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param object $user WP_User object.
+	 * @param WP_User object.
 	 *
 	 * @return boolean
 	 */
@@ -527,13 +547,27 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Show only 'VALS Registered Trainee' users when 'VALS Center Admin' users are viewing the user list.
+	 * Modify the user listing in certain cases.
 	 *
 	 * @since 0.0.1
 	 *
 	 * @param WP_User_Query instance.
 	 */
-	public function vals_center_admin_pre_user_query( $query ) {
+	public function vals_pre_user_query( $query ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		// Order users by certification date.
+		$orderby = $query->get( 'orderby');
+
+		if ( 'certification_date' === $orderby ) {
+			$query->set( 'meta_key', 'certification' );
+			$query->set( 'orderby', 'meta_value_num date' );
+		}
+
+		// When users with the 'VALS Registered Trainee' role are viewing the user list,
+		// only show users associated with the same VALS center.
 		$user = wp_get_current_user();
 
 		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
