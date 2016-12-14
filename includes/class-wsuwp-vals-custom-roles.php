@@ -65,6 +65,7 @@ class WSUWP_VALS_Custom_Roles {
 		add_action( 'admin_enqueue_scripts', array( $this, 'vals_roles_enqueue_scripts' ) );
 		add_action( 'pre_get_users', array( $this, 'vals_pre_user_query' ) );
 		add_filter( 'views_users', array( $this, 'vals_center_admin_views_users' ) );
+		add_filter( 'editable_roles', array( $this, 'vals_center_admin_editable_roles' ) );
 	}
 
 	/**
@@ -570,7 +571,7 @@ class WSUWP_VALS_Custom_Roles {
 		// only show users associated with the same VALS center.
 		$user = wp_get_current_user();
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
+		if ( $this->vals_admin_role( $user ) ) {
 			$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
 
 			// There's no `tax_query` implementation in `WP_User_Query`, so we'll try
@@ -597,7 +598,7 @@ class WSUWP_VALS_Custom_Roles {
 	public function vals_center_admin_views_users( $views ) {
 		$user = wp_get_current_user();
 
-		if ( isset( $user->roles ) && is_array( $user->roles ) && in_array( $this->roles['admin'], $user->roles, true ) ) {
+		if ( $this->vals_admin_role( $user ) ) {
 			$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
 			$center_users = get_objects_in_term( $center[0]->term_id, $this->taxonomy_slug );
 			$view_value = '<a href="users.php" class="current">' . $center[0]->name . ' Users ';
@@ -606,5 +607,28 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		return $views;
+	}
+
+	/**
+	 * Filter the roles that users with the 'VALS Center Admin' role can assign to others.
+	 *
+	 * @since 0.0.1
+	 *
+	 * @param array $all_roles All roles.
+	 *
+	 * @return array $all_roles Modified roles.
+	 */
+	public function vals_center_admin_editable_roles( $all_roles ) {
+		$user = wp_get_current_user();
+
+		if ( $this->vals_admin_role( $user ) ) {
+			unset( $all_roles['subscriber'] );
+			unset( $all_roles['contributor'] );
+			unset( $all_roles['author'] );
+			unset( $all_roles['editor'] );
+			unset( $all_roles['vals_center_admin'] );
+		}
+
+		return $all_roles;
 	}
 }
