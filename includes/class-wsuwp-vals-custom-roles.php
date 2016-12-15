@@ -305,6 +305,8 @@ class WSUWP_VALS_Custom_Roles {
 	 * @since 0.0.1
 	 *
 	 * @param string $parent_file The parent file.
+	 *
+	 * @return string $parent_file The parent file.
 	 */
 	public function user_center_page( $parent_file = '' ) {
 		$screen = get_current_screen();
@@ -321,7 +323,9 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param array $columns An array of columns to be shown in the manage terms table.
+	 * @param array $columns Default columns shown in the manage terms table.
+	 *
+	 * @return array $columns Columns to be shown in the manage terms table.
 	 */
 	public function center_user_column( $columns ) {
 		unset( $columns['posts'] );
@@ -352,7 +356,9 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param array $columns An array of columns to be shown in the All Users table.
+	 * @param array $columns Default columns shown in the All Users table.
+	 *
+	 * @return array $columns Columns to be shown in the All Users table.
 	 */
 	public function users_custom_columns( $columns ) {
 		$columns['vals_date_certified'] = 'Date Certified';
@@ -399,9 +405,9 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param array $sortable_column An array of sortable columns.
+	 * @param array $sortable_columns The default array of sortable columns.
 	 *
-	 * @return array $sortable_column Modified array of sortable columns.
+	 * @return array $sortable_columns Modified array of sortable columns.
 	 */
 	public function manage_users_vals_sortable_columns( $sortable_columns ) {
 		$sortable_columns['vals_date_certified'] = 'certification_date';
@@ -414,7 +420,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param WP_User object.
+	 * @param WP_User $user.
 	 *
 	 * @return boolean
 	 */
@@ -435,7 +441,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param WP_User object.
+	 * @param WP_User $user.
 	 *
 	 * @return boolean
 	 */
@@ -533,7 +539,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param WP_User_Query instance.
+	 * @param WP_User_Query $query.
 	 */
 	public function vals_pre_user_query( $query ) {
 		if ( ! is_admin() ) {
@@ -572,9 +578,9 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 *
-	 * @param array $views An array of available list table views.
+	 * @param array $views Default list table views.
 	 *
-	 * @return array $views The modified array of available list table views.
+	 * @return array $views Modified list table views.
 	 */
 	public function vals_center_admin_views_users( $views ) {
 		$user = wp_get_current_user();
