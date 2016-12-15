@@ -73,7 +73,7 @@ class WSUWP_VALS_Custom_Roles {
 	 *
 	 * @since 0.0.1
 	 */
-	static function add_roles() {
+	public static function add_roles() {
 		add_role(
 			WSUWP_VALS_Custom_Roles()->roles['trainee'],
 			'VALS Registered Trainee',
@@ -104,7 +104,7 @@ class WSUWP_VALS_Custom_Roles {
 	/**
 	 * Remove custom roles on deactivation.
 	 */
-	static function remove_roles() {
+	public static function remove_roles() {
 		remove_role( WSUWP_VALS_Custom_Roles()->roles['trainee'] );
 		remove_role( WSUWP_VALS_Custom_Roles()->roles['certified'] );
 		remove_role( WSUWP_VALS_Custom_Roles()->roles['admin'] );
