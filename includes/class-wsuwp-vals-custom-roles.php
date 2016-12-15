@@ -149,32 +149,10 @@ class WSUWP_VALS_Custom_Roles {
 			'show_tagcloud' => false,
 			'show_admin_column' => true,
 			'capabilities' => $capabilities,
-			'update_count_callback' => array( $this, 'update_center_count' ),
+			'update_count_callback' => '_update_generic_term_count',
 		);
 
 		register_taxonomy( $this->taxonomy_slug, 'user', $args );
-	}
-
-	/**
-	 * Callback for the 'Center' taxonomy term count.
-	 *
-	 * @since 0.0.1
-	 *
-	 * @param array  $terms    List of Term taxonomy IDs.
-	 * @param object $taxonomy Current taxonomy object of terms.
-	 */
-	function update_center_count( $terms, $taxonomy ) {
-		global $wpdb;
-
-		foreach ( (array) $terms as $term ) {
-
-			$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $wpdb->term_relationships WHERE term_taxonomy_id = %d", $term ) );
-
-			$wpdb->update( $wpdb->term_taxonomy, compact( 'count' ), array( 'term_taxonomy_id' => $term ) );
-
-			do_action( 'edit_term_taxonomy', $term, $taxonomy );
-			do_action( 'edited_term_taxonomy', $term, $taxonomy );
-		}
 	}
 
 	/**
