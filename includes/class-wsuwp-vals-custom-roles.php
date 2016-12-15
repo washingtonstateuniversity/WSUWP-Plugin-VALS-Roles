@@ -204,28 +204,31 @@ class WSUWP_VALS_Custom_Roles {
 		<?php
 		$taxonomy = get_taxonomy( $this->taxonomy_slug );
 		$terms = get_terms( $this->taxonomy_slug, array( 'hide_empty' => false ) );
-		?>
-		<tr class="vals-data">
-			<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
-			<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
-			if ( current_user_can( $taxonomy->cap->assign_terms ) && ! empty( $terms ) ) {
-				foreach ( $terms as $term ) {
-					?>
-					<input type="radio"
-						   name="<?php echo esc_attr( $this->taxonomy_slug ); ?>"
-						   id="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"
-						   value="<?php echo esc_attr( $term->slug ); ?>"
-							<?php checked( true, is_object_in_term( $user->ID, $this->taxonomy_slug, $term ) ); ?> />
-					<label for="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></label><br />
-					<?php
+		if ( is_array( $terms ) && ! empty( $terms ) ) {
+			?>
+			<tr class="vals-data">
+				<th><label for="<?php echo esc_attr( $this->taxonomy_slug ); ?>">Center</label></th>
+				<td id="<?php echo esc_attr( $this->taxonomy_slug ); ?>"><?php
+
+				if ( current_user_can( $taxonomy->cap->assign_terms ) ) {
+					foreach ( $terms as $term ) {
+						?>
+						<input type="radio"
+							   name="<?php echo esc_attr( $this->taxonomy_slug ); ?>"
+							   id="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"
+							   value="<?php echo esc_attr( $term->slug ); ?>"
+								<?php checked( true, is_object_in_term( $user->ID, $this->taxonomy_slug, $term ) ); ?> />
+						<label for="<?php echo esc_attr( $this->taxonomy_slug . '-' . $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></label><br />
+						<?php
+					}
+				} else {
+					$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
+					?><p><?php echo esc_html( $center[0]->name ); ?></p><?php
 				}
-			} else {
-				$center = wp_get_object_terms( $user->ID, $this->taxonomy_slug );
-				?><p><?php echo esc_html( $center[0]->name ); ?></p><?php
-			}
-			?></td>
-		</tr>
-		<?php
+				?></td>
+			</tr>
+			<?php
+		}
 
 		if ( in_array( $this->roles['certified'], (array) $user->roles, true ) ) {
 			?>
