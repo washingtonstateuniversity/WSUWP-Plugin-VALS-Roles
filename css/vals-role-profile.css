@@ -1,0 +1,31 @@
+h2,
+.form-table,
+.user-rich-editing-wrap,
+.user-admin-color-wrap,
+.user-comment-shortcuts-wrap,
+.show-admin-bar,
+.user-user-login-wrap,
+.user-nickname-wrap,
+.user-display-name-wrap {
+	display: none;
+}
+
+#your-profile h2:nth-of-type(2),
+#your-profile h2:nth-of-type(5),
+.vals-data h2 {
+	display: block;
+}
+
+#your-profile .form-table:first-of-type,
+#your-profile .form-table:nth-of-type(2),
+#your-profile .form-table:nth-of-type(5) {
+	display: table;
+}
+
+.vals-data {
+	display: table-row;
+}
+
+.vals-data td[colspan="2"] {
+	padding: 0;
+}
