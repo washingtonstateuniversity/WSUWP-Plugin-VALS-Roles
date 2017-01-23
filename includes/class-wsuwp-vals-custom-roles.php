@@ -96,7 +96,7 @@ class WSUWP_VALS_Custom_Roles {
 			array(
 				'read' => true,
 				'list_users' => true,
-				'promote_users' => true,
+				'create_users' => true,
 			)
 		);
 	}
@@ -505,12 +505,6 @@ class WSUWP_VALS_Custom_Roles {
 		if ( $this->non_admin_role( $user ) ) {
 			remove_menu_page( 'index.php' );
 		}
-
-		// Remove the 'Users' > 'Add New' link for users with the 'VALS Center Admin' role.
-		// (Access to this is granted via the `promote_users` capability.)
-		if ( $this->vals_admin_role( $user ) ) {
-			remove_submenu_page( 'users.php', 'user-new.php' );
-		}
 	}
 
 	/**
@@ -614,6 +608,7 @@ class WSUWP_VALS_Custom_Roles {
 			unset( $all_roles['author'] );
 			unset( $all_roles['editor'] );
 			unset( $all_roles['vals_center_admin'] );
+			unset( $all_roles['vals_certified'] );
 		}
 
 		return $all_roles;
