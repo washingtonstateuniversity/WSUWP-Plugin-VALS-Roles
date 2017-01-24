@@ -455,10 +455,10 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Redirect users with the 'VALS Registered Trainee' or 'VALS Certified' role
-	 * to their profile page after successful login.
+	 * Redirect users with a custom VALS role after successful login.
 	 *
 	 * @since 0.0.1
+	 * @since 0.0.2 Added a redirect for users with the 'VALS Center Admin' role.
 	 *
 	 * @param string $redirect_to URL to redirect to.
 	 * @param string $request     URL the user is coming from.
@@ -467,43 +467,62 @@ class WSUWP_VALS_Custom_Roles {
 	 * @return string $redirect_to URL to redirect to.
 	 */
 	function vals_roles_login_redirect( $redirect_to, $request, $user ) {
+		// Bail if the login was not successful.
+		if ( is_wp_error( $user ) ) {
+			return $redirect_to;
+		}
+
+		// Redirect users with the 'VALS Registered Trainee' or 'VALS Certified' roles to their profile page.
 		if ( $this->non_admin_role( $user ) ) {
 			$redirect_to = get_edit_profile_url( $user->ID );
+		}
+
+		// Redirect users with the 'VALS Center Admin' role to the 'All Users' page.
+		if ( $this->vals_admin_role( $user ) ) {
+			$redirect_to = get_dashboard_url( $user->ID, 'users.php' );
 		}
 
 		return $redirect_to;
 	}
 
 	/**
-	 * Redirect users with the 'VALS Registered Trainee' or 'VALS Certified' role
-	 * to their profile page if they are elsewhere in the admin.
+	 * Redirect users with a custom VALS role away from certain Dashboard pages.
 	 *
 	 * @since 0.0.1
+	 * @since 0.0.2 Added a redirect for users with the 'VALS Center Admin' role.
 	 *
 	 * @param WP_Screen object.
 	 */
 	public function vals_roles_redirect( $current_screen ) {
-		if ( 'profile' === $current_screen->base ) {
+		$user = wp_get_current_user();
+
+		// Bail if the user does not have a custom VALS role.
+		if ( ! array_intersect( $this->roles, (array) $user->roles ) ) {
 			return;
 		}
 
-		$user = wp_get_current_user();
-
-		if ( $this->non_admin_role( $user ) ) {
+		// 'VALS Registered Trainee' or 'VALS Certified' roles can only access their profile page.
+		if ( $this->non_admin_role( $user ) && 'profile' !== $current_screen->base ) {
 			wp_redirect( get_edit_profile_url( $user->ID ) );
+		}
+
+		// Users with the 'Vals Center Admin' role can access the following pages:
+		// 'All Users', 'Users' > 'Add New', and 'Your Profile'.
+		if ( $this->vals_admin_role( $user ) && ! in_array( $current_screen->base, array( 'users', 'user', 'profile' ), true ) ) {
+			wp_redirect( get_dashboard_url( $user->ID, 'users.php' ) );
 		}
 	}
 
 	/**
-	 * Remove certain admin menu links for the different custom VALS roles.
+	 * Remove the 'Dashboard' page for users with a custom VALS role.
 	 *
 	 * @since 0.0.1
+	 * @since 0.0.2 Updated to remove the page for users with any VALS role.
 	 */
 	public function vals_roles_menu_pages() {
 		$user = wp_get_current_user();
 
-		// Remove the 'Dashboard' page for users with the 'VALS Registered Trainee' or 'VALS Certified' role.
-		if ( $this->non_admin_role( $user ) ) {
+		if ( array_intersect( $this->roles, (array) $user->roles ) ) {
 			remove_menu_page( 'index.php' );
 		}
 	}
