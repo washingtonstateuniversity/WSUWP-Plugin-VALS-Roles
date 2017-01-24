@@ -508,23 +508,31 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Enqueue a stylesheet for profiles of users with a custom VALS role.
+	 * Enqueue stylesheets on certain dashboard pages for users with a custom VALS role.
 	 *
 	 * @since 0.0.1
 	 *
 	 * @param string $hook_suffix The current admin page.
 	 */
 	public function vals_roles_enqueue_scripts( $hook_suffix ) {
-		if ( ! in_array( $hook_suffix, array( 'profile.php', 'user-edit.php' ), true ) ) {
-			return;
+		// Hide a majority of the default profile fields of/for users with a custom VALS role.
+		if ( in_array( $hook_suffix, array( 'profile.php', 'user-edit.php' ), true ) ) {
+			global $user_id;
+
+			$user = get_userdata( $user_id );
+
+			if ( array_intersect( $this->roles, (array) $user->roles ) ) {
+				wp_enqueue_style( 'vals-role-profile', plugins_url( 'css/vals-role-profile.css', dirname( __FILE__ ) ) );
+			}
 		}
 
-		global $user_id;
+		// Hide the "Add Existing User" form from VALS Center Admins.
+		if ( 'user-new.php' === $hook_suffix ) {
+			$current_user = wp_get_current_user();
 
-		$user = get_userdata( $user_id );
-
-		if ( array_intersect( $this->roles, (array) $user->roles ) ) {
-			wp_enqueue_style( 'vals-role-profile', plugins_url( 'css/vals-role-profile.css', dirname( __FILE__ ) ) );
+			if ( $this->vals_admin_role( $current_user ) ) {
+				wp_enqueue_style( 'vals-role-profile', plugins_url( 'css/add-user.css', dirname( __FILE__ ) ) );
+			}
 		}
 	}
 
