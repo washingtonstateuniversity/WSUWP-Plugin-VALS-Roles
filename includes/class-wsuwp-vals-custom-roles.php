@@ -66,6 +66,7 @@ class WSUWP_VALS_Custom_Roles {
 		add_action( 'pre_get_users', array( $this, 'vals_pre_user_query' ) );
 		add_filter( 'views_users', array( $this, 'vals_center_admin_views_users' ) );
 		add_filter( 'editable_roles', array( $this, 'vals_center_admin_editable_roles' ) );
+		add_action( 'user_register', array( $this, 'save_new_user_center' ) );
 	}
 
 	/**
@@ -620,5 +621,21 @@ class WSUWP_VALS_Custom_Roles {
 		}
 
 		return $all_roles;
+	}
+
+	/**
+	 * Associate new users added by a VALS Center Admin with the respective VALS Center.
+	 *
+	 * @since 0.0.2
+	 *
+	 * @param int $user_id The ID of the new user.
+	 */
+	public function save_new_user_center( $user_id ) {
+		$current_user = wp_get_current_user();
+
+		if ( $this->vals_admin_role( $current_user ) ) {
+			$center = wp_get_object_terms( $current_user->ID, $this->taxonomy_slug );
+			wp_set_object_terms( $user_id, array( $center[0]->slug ), $this->taxonomy_slug, false );
+		}
 	}
 }
