@@ -291,6 +291,7 @@ class WSUWP_VALS_Custom_Roles {
 	 * Create an admin page for the 'Center' taxonomy under the 'Users' menu.
 	 *
 	 * @since 0.0.1
+	 * @since 0.0.3 Create a 'Proctor Quiz' link under the 'Users' menu for VALS Center Admins.
 	 */
 	function center_admin_page() {
 		$taxonomy = get_taxonomy( $this->taxonomy_slug );
@@ -301,6 +302,19 @@ class WSUWP_VALS_Custom_Roles {
 			$taxonomy->cap->manage_terms,
 			'edit-tags.php?taxonomy=' . $taxonomy->name
 		);
+
+		if ( $this->vals_admin_role( wp_get_current_user() ) ) {
+			global $submenu;
+
+			$proctor_quiz_link = array(
+				'Proctor Quiz',
+				'list_users',
+				'https://wsu.co1.qualtrics.com/SE/?SID=SV_0fC1HesVe87b9Cl',
+			);
+
+			// This seems weird, but the `add_{}_page` functions don't allow for arbitrary URLs.
+			array_push( $submenu['users.php'], $proctor_quiz_link );
+		}
 	}
 
 	/**
