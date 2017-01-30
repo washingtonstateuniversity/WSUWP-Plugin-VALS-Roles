@@ -68,6 +68,8 @@ class WSUWP_VALS_Custom_Roles {
 		add_filter( 'editable_roles', array( $this, 'vals_center_admin_editable_roles' ) );
 		add_action( 'user_register', array( $this, 'save_new_user_center' ) );
 		add_action( 'set_user_role', array( $this, 'add_certification_date' ), 10, 2 );
+		add_filter( 'map_meta_cap', array( $this, 'admin_edit_vals_roles' ), 10, 4 );
+		add_filter( 'enable_edit_any_user_configuration', '__return_true' );
 	}
 
 	/**
@@ -672,5 +674,43 @@ class WSUWP_VALS_Custom_Roles {
 			// Use today's date. (This can be manually changed by editing the user, if needed.)
 			update_user_meta( $user_id, 'certification', sanitize_text_field( date( 'Y-m-d' ) ) );
 		}
+	}
+
+	/**
+	 * Allow site Administrators to edit users with a VALS role.
+	 *
+	 * @param array  $caps    The user's actual capabilities.
+	 * @param string $cap     Capability name.
+	 * @param int    $user_id The user ID.
+	 * @param array  $args    Adds the context to the cap (typically the object ID).
+	 *
+	 * @return
+	 */
+	public function admin_edit_vals_roles( $caps, $cap, $user_id, $args ) {
+		$user = get_userdata( $user_id );
+
+		// Bail if the current user doesn't have the Administrator role.
+		if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) || ! $args ) {
+			return $caps;
+		}
+
+		$vals_user = get_userdata( $args[0] );
+
+		// Bail if the user being edited doesn't have a VALS role, or is the same as the current user.
+		if ( ! $vals_user || ! array_intersect( $this->roles, (array) $vals_user->roles ) || $user->ID === $vals_user->ID ) {
+			return $caps;
+		}
+
+		foreach ( $caps as $key => $capability ) {
+			if ( 'do_not_allow' !== $capability ) {
+				continue;
+			}
+
+			if ( 'edit_user' === $cap ) {
+				$caps[ $key ] = 'edit_users';
+			}
+		}
+
+		return $caps;
 	}
 }
