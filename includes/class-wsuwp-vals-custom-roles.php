@@ -687,28 +687,22 @@ class WSUWP_VALS_Custom_Roles {
 	 * @return
 	 */
 	public function admin_edit_vals_roles( $caps, $cap, $user_id, $args ) {
-		$user = get_userdata( $user_id );
+		if ( 'edit_user' === $cap ) {
+			$user = get_userdata( $user_id );
 
-		// Bail if the current user doesn't have the Administrator role.
-		if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) || ! $args ) {
-			return $caps;
-		}
-
-		$vals_user = get_userdata( $args[0] );
-
-		// Bail if the user being edited doesn't have a VALS role, or is the same as the current user.
-		if ( ! $vals_user || ! array_intersect( $this->roles, (array) $vals_user->roles ) || $user->ID === $vals_user->ID ) {
-			return $caps;
-		}
-
-		foreach ( $caps as $key => $capability ) {
-			if ( 'do_not_allow' !== $capability ) {
-				continue;
+			// Bail if the current user doesn't have the Administrator role.
+			if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) || ! $args ) {
+				return $caps;
 			}
 
-			if ( 'edit_user' === $cap ) {
-				$caps[ $key ] = 'edit_users';
+			$vals_user = get_userdata( $args[0] );
+
+			// Bail if the user being edited doesn't have a VALS role, or is the same as the current user.
+			if ( ! $vals_user || ! array_intersect( $this->roles, (array) $vals_user->roles ) || $user->ID === $vals_user->ID ) {
+				return $caps;
 			}
+
+			$caps[0] = 'edit_users';
 		}
 
 		return $caps;
