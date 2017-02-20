@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WSUWP VALS Custom Roles
-Version: 0.0.3
+Version: 0.0.4
 Description: Adds custom Test Center Admins and Registered Trainees roles.
 Author: washingtonstateuniversity
 Author URI: https://web.wsu.edu/
