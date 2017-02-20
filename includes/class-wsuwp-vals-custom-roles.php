@@ -660,18 +660,29 @@ class WSUWP_VALS_Custom_Roles {
 	}
 
 	/**
-	 * Associate new users added by a VALS Center Admin with the respective VALS Center.
+	 * Handling for users added by a VALS Center Admin, and any user added with a VALS role.
 	 *
 	 * @since 0.0.2
+	 * @since 0.0.4 Set user type to `Google Sign-in` for any new users added with a VALS role.
 	 *
 	 * @param int $user_id The ID of the new user.
 	 */
 	public function save_new_user_center( $user_id ) {
+		if ( ! wp_verify_nonce( $_POST['_wpnonce_create-user'], 'create-user' ) ) {
+			return;
+		}
+
 		$current_user = wp_get_current_user();
 
+		// Associate users added by a VALS Center Admin with the Admin's respective VALS Center.
 		if ( $this->vals_admin_role( $current_user ) ) {
 			$center = wp_get_object_terms( $current_user->ID, $this->taxonomy_slug );
 			wp_set_object_terms( $user_id, array( $center[0]->slug ), $this->taxonomy_slug, false );
+		}
+
+		// Set user type to `Google Sign-in` for any new users added with a VALS role.
+		if ( isset( $_POST['role'] ) && in_array( $_POST['role'], array( 'vals_trainee', 'vals_certified', 'vals_center_admin' ), true ) ) {
+			update_user_meta( $user_id, '_wsuwp_sso_user_type', 'google' );
 		}
 	}
 
